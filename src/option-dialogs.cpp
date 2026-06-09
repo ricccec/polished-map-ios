@@ -6,6 +6,7 @@
 #pragma warning(push, 0)
 #include <FL/Enumerations.H>
 #include <FL/Fl_Double_Window.H>
+#include <FL/filename.H>
 #pragma warning(pop)
 
 #include "preferences.h"
