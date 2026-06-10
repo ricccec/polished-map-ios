@@ -731,7 +731,7 @@ Main_Window::Main_Window(int x, int y, int w, int h, const char *) : Fl_Overlay_
 	_new_dir_chooser->title("Choose Project Directory");
 
 	_blk_open_chooser->title("Open Map");
-	_blk_open_chooser->filter("BLK Files\t*.blk\nMAP Files\t*.map\n");
+	_blk_open_chooser->filter("BLK Files\t*.{blk,ablk}\nMAP Files\t*.map\n");
 
 	_blk_save_chooser->title("Save Map");
 	_blk_save_chooser->filter("BLK Files\t*.blk\n");
