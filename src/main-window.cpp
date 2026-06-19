@@ -71,10 +71,13 @@ Main_Window::Main_Window(int x, int y, int w, int h, const char *) : Fl_Overlay_
 	Palettes palettes_config = (Palettes)Preferences::get("palettes", (int)Palettes::DAY);
 
 	int monochrome_config = Preferences::get("monochrome", 0);
+	int prism_config = Preferences::get("prism", 0);
+	if (monochrome_config && prism_config) { prism_config = 0; } // exclusive render modes
 	int allow_priority_config = Preferences::get("prioritize", 0);
 	int allow_256_tiles_config = Preferences::get("all256", 0);
 	int drag_and_drop_config = Preferences::get("drag", 1);
 	Config::monochrome(!!monochrome_config);
+	Config::prism(!!prism_config);
 	Config::allow_priority(!!allow_priority_config);
 	Config::allow_256_tiles(!!allow_256_tiles_config);
 	Config::drag_and_drop(!!drag_and_drop_config);
@@ -439,12 +442,19 @@ Main_Window::Main_Window(int x, int y, int w, int h, const char *) : Fl_Overlay_
 		OS_MENU_ITEM("Edit Current &Palettes...", FL_COMMAND + 'L', (Fl_Callback *)edit_current_palettes_cb, this, 0),
 		{},
 		OS_SUBMENU("&Options"),
+		OS_MENU_ITEM("Palette system", 0, NULL, NULL, FL_SUBMENU | FL_MENU_DIVIDER),
+		OS_MENU_ITEM("&Crystal Palettes", 0, (Fl_Callback *)default_palettes_cb, this,
+			FL_MENU_RADIO | (!monochrome_config && !prism_config ? FL_MENU_VALUE : 0)),
 		OS_MENU_ITEM("&Monochrome", 0, (Fl_Callback *)monochrome_cb, this,
-			FL_MENU_TOGGLE | (monochrome_config ? FL_MENU_VALUE : 0)),
+			FL_MENU_RADIO | (monochrome_config ? FL_MENU_VALUE : 0)),
+		OS_MENU_ITEM("Pris&m Palettes", 0, (Fl_Callback *)prism_cb, this,
+			FL_MENU_RADIO | (prism_config ? FL_MENU_VALUE : 0)),
+		{},
 		OS_MENU_ITEM("Tile &Priority", 0, (Fl_Callback *)allow_priority_cb, this,
 			FL_MENU_TOGGLE | (allow_priority_config ? FL_MENU_VALUE : 0)),
 		OS_MENU_ITEM("256 &Tiles", 0, (Fl_Callback *)allow_256_tiles_cb, this,
 			FL_MENU_TOGGLE | (allow_256_tiles_config ? FL_MENU_VALUE : 0)),
+		// Roof Palettes submenu
 		OS_MENU_ITEM("Roo&f Palettes", 0, NULL, NULL, FL_SUBMENU | FL_MENU_DIVIDER),
 		OS_MENU_ITEM("&Custom", 0, (Fl_Callback *)roof_custom_cb, this,
 			FL_MENU_RADIO | (_roof_palettes == Roof_Palettes::ROOF_CUSTOM ? FL_MENU_VALUE : 0)),
@@ -525,7 +535,9 @@ Main_Window::Main_Window(int x, int y, int w, int h, const char *) : Fl_Overlay_
 	_custom_mi = PM_FIND_MENU_ITEM_CB(custom_palettes_cb);
 	_blocks_mode_mi = PM_FIND_MENU_ITEM_CB(blocks_mode_cb);
 	_events_mode_mi = PM_FIND_MENU_ITEM_CB(events_mode_cb);
+	_crystal_palettes_mi = PM_FIND_MENU_ITEM_CB(default_palettes_cb);
 	_monochrome_mi = PM_FIND_MENU_ITEM_CB(monochrome_cb);
+	_prism_mi = PM_FIND_MENU_ITEM_CB(prism_cb);
 	_allow_priority_mi = PM_FIND_MENU_ITEM_CB(allow_priority_cb);
 	_allow_256_tiles_mi = PM_FIND_MENU_ITEM_CB(allow_256_tiles_cb);
 	_roof_custom_mi = PM_FIND_MENU_ITEM_CB(roof_custom_cb);
@@ -1226,11 +1238,16 @@ void Main_Window::update_priority_controls() {
 }
 
 void Main_Window::update_monochrome_controls() {
+	// keep the Crystal/Monochrome/Prism radio group in sync with Config
+	// (monochrome may have been forced on if the palette map could not be read)
 	if (Config::monochrome()) {
-		_monochrome_mi->set();
+		_monochrome_mi->setonly();
+	}
+	else if (Config::prism()) {
+		_prism_mi->setonly();
 	}
 	else {
-		_monochrome_mi->clear();
+		_crystal_palettes_mi->setonly();
 	}
 }
 
@@ -1517,6 +1534,10 @@ void Main_Window::open_map(const char *directory, const char *filename) {
 		_palettes->value((int)new_palettes);
 		palettes_cb(NULL, this);
 		update_palettes();
+	}
+	else if (Config::prism()) {
+		// resolve Prism palettes now that the map's environment is known
+		_metatileset.resolve_prism_palettes(_map.environment(), palettes());
 	}
 
 	// load roof colors if applicable
@@ -1808,6 +1829,28 @@ bool Main_Window::read_metatile_data(const char *tileset_name, const char *roof_
 		_error_dialog->message(msg);
 		_error_dialog->show(this);
 		return false;
+	}
+
+	if (Config::prism()) {
+		// Prism: per-tile palette/flip attributes (binary) + master bg.pal palette set
+		Config::attributes_path(buffer, directory, tileset_name);
+		Metatileset::Result ra = _metatileset.read_attributes(buffer);
+		if (ra != Metatileset::Result::META_OK) {
+			Config::attributes_path(buffer, "", tileset_name);
+			std::string msg = "Warning: ";
+			msg = msg + buffer + ":\n\n" + Metatileset::error_message(ra);
+			_warning_dialog->message(msg);
+			_warning_dialog->show(this);
+		}
+		char pal_buffer[FL_PATH_MAX] = {};
+		Config::bg_tiles_pal_path(pal_buffer, directory);
+		if (!_metatileset.load_prism_palettes(pal_buffer)) {
+			Config::bg_tiles_pal_path(pal_buffer, "");
+			std::string msg = "Warning: could not read ";
+			msg = msg + pal_buffer + " for Prism palettes.";
+			_warning_dialog->message(msg);
+			_warning_dialog->show(this);
+		}
 	}
 
 	bool bin_collisions = Config::collisions_path(buffer, directory, tileset_name);
@@ -2439,6 +2482,9 @@ void Main_Window::update_labels() {
 void Main_Window::update_palettes() {
 	Tileset &tileset = _metatileset.tileset();
 	tileset.update_palettes(palettes());
+	if (Config::prism()) {
+		_metatileset.resolve_prism_palettes(_map.environment(), palettes());
+	}
 	redraw();
 }
 
@@ -2953,6 +2999,7 @@ void Main_Window::exit_cb(Fl_Widget *, Main_Window *mw) {
 	Preferences::set("transparent", mw->transparent());
 	Preferences::set("palettes", (int)mw->palettes());
 	Preferences::set("monochrome", mw->monochrome());
+	Preferences::set("prism", Config::prism());
 	Preferences::set("prioritize", mw->allow_priority());
 	Preferences::set("all256", mw->allow_256_tiles());
 	Preferences::set("roof-palettes", (int)mw->_roof_palettes);
@@ -3482,8 +3529,21 @@ void Main_Window::edit_current_palettes_cb(Fl_Widget *, Main_Window *mw) {
 	mw->redraw();
 }
 
-void Main_Window::monochrome_cb(Fl_Menu_ *m, Main_Window *mw) {
-	Config::monochrome(!!m->mvalue()->value());
+void Main_Window::default_palettes_cb(Fl_Menu_ *, Main_Window *mw) {
+	Config::monochrome(false);
+	Config::prism(false);
+	change_tileset_cb(NULL, mw);
+}
+
+void Main_Window::monochrome_cb(Fl_Menu_ *, Main_Window *mw) {
+	Config::monochrome(true);
+	Config::prism(false);
+	change_tileset_cb(NULL, mw);
+}
+
+void Main_Window::prism_cb(Fl_Menu_ *, Main_Window *mw) {
+	Config::prism(true);
+	Config::monochrome(false);
 	change_tileset_cb(NULL, mw);
 }
 

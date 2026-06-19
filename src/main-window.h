@@ -54,6 +54,7 @@ private:
 	Fl_Menu_Item *_morn_mi = NULL, *_day_mi = NULL, *_night_mi = NULL, *_darkness_mi = NULL, *_indoor_mi = NULL,
 		*_custom_mi = NULL;
 	Fl_Menu_Item *_blocks_mode_mi = NULL, *_events_mode_mi = NULL;
+	Fl_Menu_Item *_crystal_palettes_mi = NULL, *_prism_mi = NULL;
 	Fl_Menu_Item *_monochrome_mi = NULL, *_allow_priority_mi = NULL, *_allow_256_tiles_mi = NULL, *_auto_events_mi = NULL,
 		*_special_palettes_mi = NULL, *_roof_colors_mi = NULL, *_drag_and_drop_mi = NULL, *_overworld_map_size_mi = NULL;
 	Fl_Menu_Item *_roof_custom_mi = NULL, *_roof_day_nite_mi = NULL, *_roof_morn_day_nite_mi = NULL,
@@ -143,6 +144,7 @@ public:
 	inline Palettes palettes(void) const { return (Palettes)_palettes->value(); }
 	inline Mode mode(void) const { return _mode; }
 	inline bool monochrome(void) const { return _monochrome_mi && !!_monochrome_mi->value(); }
+	inline bool prism(void) const { return _prism_mi && !!_prism_mi->value(); }
 	inline bool allow_priority(void) const { return _allow_priority_mi && !!_allow_priority_mi->value(); }
 	inline bool allow_256_tiles(void) const { return _allow_256_tiles_mi && !!_allow_256_tiles_mi->value(); }
 	inline bool auto_load_events(void) const { return _auto_events_mi && !!_auto_events_mi->value(); }
@@ -288,7 +290,9 @@ private:
 	static void edit_roof_cb(Fl_Widget *w, Main_Window *mw);
 	static void edit_current_palettes_cb(Fl_Widget *w, Main_Window *mw);
 	// Options menu
+	static void default_palettes_cb(Fl_Menu_ *m, Main_Window *mw);
 	static void monochrome_cb(Fl_Menu_ *m, Main_Window *mw);
+	static void prism_cb(Fl_Menu_ *m, Main_Window *mw);
 	static void allow_priority_cb(Fl_Menu_ *m, Main_Window *mw);
 	static void allow_256_tiles_cb(Fl_Menu_ *m, Main_Window *mw);
 	static void roof_custom_cb(Fl_Menu_ *m, Main_Window *mw);
