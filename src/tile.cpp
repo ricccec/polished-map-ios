@@ -104,10 +104,11 @@ void Tile::update_palettes(Palettes l) {
 	}
 }
 
-void Tile::draw_with_priority(int x, int y, int s, bool show_priority) const {
-	const uchar *rgb = _rgb;
-	show_priority &= priority();
+// Draw tile image data at the specified position and size
+// Handles three different sizes: chip (24x24), tile (16x16), and original (8x8)
+void Tile::blit(const uchar *rgb, int x, int y, int s) const {
 	if (s == CHIP_PX_SIZE) {
+		// For chip size (24x24), expand each pixel to a larger block
 		uchar chip[CHIP_PX_SIZE * CHIP_PX_SIZE * NUM_CHANNELS] = {};
 		for (int ty = 0; ty < TILE_SIZE; ty++) {
 			for (int tx = 0; tx < TILE_SIZE; tx++) {
@@ -124,22 +125,59 @@ void Tile::draw_with_priority(int x, int y, int s, bool show_priority) const {
 			}
 		}
 		fl_draw_image(chip, x, y, CHIP_PX_SIZE, CHIP_PX_SIZE, NUM_CHANNELS, CHIP_LINE_BYTES);
-		if (show_priority) {
-			chip_priority_png.draw(x, y, CHIP_PX_SIZE, CHIP_PX_SIZE);
-		}
 	}
 	else if (s == TILE_PX_SIZE) {
+		// For tile size (16x16), draw directly
 		fl_draw_image(rgb, x, y, TILE_PX_SIZE, TILE_PX_SIZE, NUM_CHANNELS, LINE_BYTES);
-		if (show_priority) {
-			large_priority_png.draw(x, y, TILE_PX_SIZE, TILE_PX_SIZE);
-		}
 	}
 	else {
+		// For original size (8x8), draw with zoom factor
 		fl_draw_image(rgb, x, y, TILE_SIZE, TILE_SIZE, NUM_CHANNELS * ZOOM_FACTOR, LINE_BYTES * ZOOM_FACTOR);
-		if (show_priority) {
+	}
+}
+
+// Draw the tile with an optional priority overlay
+// If show_priority is true and the tile has priority, draws a zigzag pattern overlay
+void Tile::draw_with_priority(int x, int y, int s, bool show_priority) const {
+	blit(_rgb, x, y, s);
+	show_priority &= priority();
+	if (show_priority) {
+		// Draw appropriate priority pattern based on size
+		if (s == CHIP_PX_SIZE) {
+			chip_priority_png.draw(x, y, CHIP_PX_SIZE, CHIP_PX_SIZE);
+		}
+		else if (s == TILE_PX_SIZE) {
+			large_priority_png.draw(x, y, TILE_PX_SIZE, TILE_PX_SIZE);
+		}
+		else {
 			small_priority_png.draw(x, y, TILE_SIZE, TILE_SIZE);
 		}
 	}
+}
+
+// Draw tile using Prism palette system with optional flipping
+// Recolors the tile using the provided palette and applies x/y flipping if specified
+void Tile::draw_prism(int x, int y, int s, const uchar pal[][NUM_CHANNELS], bool xflip, bool yflip) const {
+	// Recolor _hues (raw 2bpp indices, stored as Hue) through pal, expanding each
+	// source pixel into a 2x2 block to match the editor's pre-zoomed _rgb layout.
+	uchar rgb[LINE_PX * LINE_PX * NUM_CHANNELS];
+	for (int ty = 0; ty < TILE_SIZE; ty++) {
+		int sy = yflip ? (TILE_SIZE - 1 - ty) : ty;
+		for (int tx = 0; tx < TILE_SIZE; tx++) {
+			int sx = xflip ? (TILE_SIZE - 1 - tx) : tx;
+			
+			const uchar *c = pal[(int)_hues[sy * TILE_SIZE + sx]];
+			int i = (ty * LINE_BYTES + tx * NUM_CHANNELS) * ZOOM_FACTOR;
+			for (int ch = 0; ch < NUM_CHANNELS; ch++) {
+				uchar v = c[ch];
+				rgb[i + ch] = v;
+				rgb[i + ch + NUM_CHANNELS] = v;
+				rgb[i + ch + LINE_BYTES] = v;
+				rgb[i + ch + LINE_BYTES + NUM_CHANNELS] = v;
+			}
+		}
+	}
+	blit(rgb, x, y, s);
 }
 
 void Tile::draw_for_clipboard(int x, int y) {

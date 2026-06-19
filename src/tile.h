@@ -47,7 +47,12 @@ public:
 	void copy(const Tile *t);
 	void update_palettes(Palettes l);
 	void draw_with_priority(int x, int y, int s, bool show_priority) const;
+	// Prism: recolor this tile's raw pixel indices (_hues) through a 4-color palette,
+	// with optional horizontal/vertical flips, then draw at size s.
+	void draw_prism(int x, int y, int s, const uchar pal[][NUM_CHANNELS], bool xflip, bool yflip) const;
 	void draw_for_clipboard(int x, int y);
+private:
+	void blit(const uchar *rgb, int x, int y, int s) const;
 };
 
 #endif
