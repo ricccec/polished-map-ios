@@ -6,6 +6,7 @@
 class Config {
 private:
 	static bool _monochrome, _priority, _256_tiles, _drag_and_drop;
+	static bool _prism;
 	static bool _print_grid, _print_ids, _print_priority, _print_events, _print_warp_ids;
 	static size_t _overworld_map_size;
 public:
@@ -20,6 +21,7 @@ public:
 	static void roof_path(char *dest, const char *root, const char *roof);
 	static void roof_png_path(char *dest, const char *root, const char *roof);
 	static void metatileset_path(char *dest, const char *root, const char *tileset);
+	static void attributes_path(char *dest, const char *root, const char *tileset);
 	static bool collisions_path(char *dest, const char *root, const char *tileset);
 	static void map_constants_path(char *dest, const char *root);
 	static void tileset_constants_path(char *dest, const char *root);
@@ -31,6 +33,8 @@ public:
 	static void special_pal_path(char *dest, const char *root, const char *filename, const char *landmark, const char *tileset);
 	inline static bool monochrome(void) { return _monochrome; }
 	inline static void monochrome(bool m) { _monochrome = m; }
+	inline static bool prism(void) { return _prism; }
+	inline static void prism(bool p) { _prism = p; }
 	inline static bool allow_priority(void) { return _priority; }
 	inline static void allow_priority(bool p) { _priority = p; }
 	inline static bool allow_256_tiles(void) { return _256_tiles; }

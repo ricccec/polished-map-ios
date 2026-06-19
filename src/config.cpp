@@ -10,6 +10,7 @@
 #include "config.h"
 
 bool Config::_monochrome = false, Config::_priority = false, Config::_256_tiles = false, Config::_drag_and_drop = true;
+bool Config::_prism = false;
 bool Config::_print_grid = false, Config::_print_ids = false, Config::_print_priority = false, Config::_print_events = false,
 	Config::_print_warp_ids = false;
 
@@ -68,7 +69,9 @@ static void _palette_map_path(char *dest, const char *root, const char *tileset)
 }
 
 void Config::palette_map_path(char *dest, const char *root, const char *tileset) {
-	if (monochrome()) { return; }
+	// Monochrome and Prism use a different logic
+	if (monochrome() || prism()) { return; }
+	
 	// try paths with full tileset name
 	_palette_map_path(dest, root, tileset);
 	if (file_exists(dest)) { return; }
@@ -175,6 +178,28 @@ void Config::metatileset_path(char *dest, const char *root, const char *tileset)
 	char name[FL_PATH_MAX] = {};
 	remove_suffix(tileset, name);
 	_metatileset_path(dest, root, name);
+}
+
+static void _attributes_path(char *dest, const char *root, const char *tileset) {
+	// try tilesets/*_attributes.bin (Prism)
+	sprintf(dest, "%stilesets" DIR_SEP "%s_attributes.bin", root, tileset);
+	if (file_exists(dest)) { return; }
+	// last resort: data/tilesets/*_attributes.bin
+	sprintf(dest, "%sdata" DIR_SEP "tilesets" DIR_SEP "%s_attributes.bin", root, tileset);
+}
+
+// Helper function to determine the path to tileset attribute file, the one Prism
+// uses to store palettes and other data.
+// This is a best effort euristic that tryes both full tileset name
+// and trimmed suffix versions to support different naming conventions
+void Config::attributes_path(char *dest, const char *root, const char *tileset) {
+	// try paths with full tileset name
+	_attributes_path(dest, root, tileset);
+	if (file_exists(dest)) { return; }
+	// retry paths with trimmed suffix
+	char name[FL_PATH_MAX] = {};
+	remove_suffix(tileset, name);
+	_attributes_path(dest, root, name);
 }
 
 static bool _collisions_path(char *dest, const char *root, const char *tileset) {
