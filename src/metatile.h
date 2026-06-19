@@ -20,6 +20,7 @@ class Metatile {
 private:
 	uint8_t _id;
 	uint8_t _tile_ids[METATILE_SIZE][METATILE_SIZE];
+	uint8_t _attributes[METATILE_SIZE][METATILE_SIZE]; // Prism: bits0-2 palette, bit3 VRAM bank, bit5 x-flip, bit6 y-flip
 	std::string _collisions[NUM_QUADRANTS];
 	uint8_t _bin_collisions[NUM_QUADRANTS];
 public:
@@ -28,6 +29,8 @@ public:
 	inline void id(uint8_t id) { _id = id; }
 	inline uint8_t tile_id(int x, int y) const { return _tile_ids[y][x]; }
 	inline void tile_id(int x, int y, uint8_t id) { _tile_ids[y][x] = id; }
+	inline uint8_t attribute(int x, int y) const { return _attributes[y][x]; }
+	inline void attribute(int x, int y, uint8_t a) { _attributes[y][x] = a; }
 	inline std::string collision(Quadrant q) const { return _collisions[(int)q]; }
 	inline void collision(Quadrant q, const std::string &c) { _collisions[(int)q] = c; }
 	inline uint8_t bin_collision(Quadrant q) const { return _bin_collisions[(int)q]; }
