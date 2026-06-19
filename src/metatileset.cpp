@@ -8,9 +8,10 @@
 
 #include "metatileset.h"
 #include "parse-asm.h"
+#include "config.h"
 
 Metatileset::Metatileset() : _tileset(), _metatiles(), _num_metatiles(0), _result(Result::META_NULL), _modified(false),
-	_bin_collisions(false), _mod_time(0), _mod_time_coll(0) {
+	_bin_collisions(false), _mod_time(0), _mod_time_coll(0), _mod_time_attr(0), _prism_palettes(), _prism_resolved() {
 	for (size_t i = 0; i < MAX_NUM_METATILES; i++) {
 		_metatiles[i] = new Metatile((uint8_t)i);
 	}
@@ -32,7 +33,8 @@ void Metatileset::clear() {
 	_result = Result::META_NULL;
 	_modified = false;
 	_bin_collisions = false;
-	_mod_time = _mod_time_coll = 0;
+	_mod_time = _mod_time_coll = _mod_time_attr = 0;
+	_prism_palettes.clear();
 }
 
 void Metatileset::size(size_t n) {
@@ -64,6 +66,7 @@ void Metatileset::trim_tileset() {
 	}
 }
 
+// Prism: attribute byte encodes palette (bits 0-2), VRAM bank (bit 3 → +128 to tile ID), x-flip (bit 5), y-flip (bit 6).
 void Metatileset::draw_metatile(int x, int y, uint8_t id, bool zoom, bool show_priority) const {
 	if (id < size()) {
 		Metatile *mt = _metatiles[id];
@@ -73,8 +76,18 @@ void Metatileset::draw_metatile(int x, int y, uint8_t id, bool zoom, bool show_p
 			for (int tx = 0; tx < METATILE_SIZE; tx++) {
 				int ax = x + tx * s;
 				uint8_t tid = mt->tile_id(tx, ty);
-				const Tile *t = _tileset.const_tile_or_roof(tid);
-				t->draw_with_priority(ax, ay, zoom ? TILE_PX_SIZE : TILE_SIZE, show_priority);
+				if (Config::prism()) {
+					uint8_t attr = mt->attribute(tx, ty);
+					uint8_t eff = (uint8_t)(tid + ((attr & 0x08) ? 128 : 0)); // bit 3: VRAM bank
+					const Tile *t = _tileset.const_tile(eff);
+					t->draw_prism(ax, ay, zoom ? TILE_PX_SIZE : TILE_SIZE,
+						_prism_resolved[attr & 0x07],
+						(attr & 0x20) != 0,		// x flip
+						(attr & 0x40) != 0);	// y flip
+				} else {
+					const Tile *t = _tileset.const_tile_or_roof(tid);
+					t->draw_with_priority(ax, ay, zoom ? TILE_PX_SIZE : TILE_SIZE, show_priority);
+				}
 			}
 		}
 	}
@@ -85,6 +98,25 @@ void Metatileset::draw_metatile(int x, int y, uint8_t id, bool zoom, bool show_p
 	}
 }
 
+void Metatileset::print_rgb_prism_tile(uchar *buffer, size_t o, int bw, uint8_t tid, uint8_t attr) const {
+	uint8_t eff = (uint8_t)(tid + ((attr & 0x08) ? 128 : 0));
+	const Tile *t = _tileset.const_tile(eff);
+	const uchar (*pal)[NUM_CHANNELS] = _prism_resolved[attr & 0x07];
+	bool xflip = (attr & 0x20) != 0, yflip = (attr & 0x40) != 0;
+	for (int py = 0; py < TILE_SIZE; py++) {
+		int sy = yflip ? (TILE_SIZE - 1 - py) : py;
+		for (int px = 0; px < TILE_SIZE; px++) {
+			int sx = xflip ? (TILE_SIZE - 1 - px) : px;
+			const uchar *rgb = pal[(int)t->hue(sx, sy)];
+			size_t j = o + (py * bw + px) * NUM_CHANNELS;
+			buffer[j++] = rgb[0];
+			buffer[j++] = rgb[1];
+			buffer[j] = rgb[2];
+		}
+	}
+}
+
+// Returns a heap-allocated RGB buffer (caller must delete[]).
 uchar *Metatileset::print_rgb(const Map &map) const {
 	int w = map.width(), h = map.height();
 	int bw = w * METATILE_PX_SIZE, bh = h * METATILE_PX_SIZE;
@@ -96,15 +128,19 @@ uchar *Metatileset::print_rgb(const Map &map) const {
 			for (int ty = 0; ty < METATILE_SIZE; ty++) {
 				for (int tx = 0; tx < METATILE_SIZE; tx++) {
 					uint8_t tid = m->tile_id(tx, ty);
-					const Tile *t = _tileset.const_tile_or_roof(tid);
 					size_t o = ((y * METATILE_SIZE + ty) * bw + x * METATILE_SIZE + tx) * TILE_SIZE * NUM_CHANNELS;
-					for (int py = 0; py < TILE_SIZE; py++) {
-						for (int px = 0; px < TILE_SIZE; px++) {
-							const uchar *rgb = t->const_pixel(px, py);
-							size_t j = o + (py * bw + px) * NUM_CHANNELS;
-							buffer[j++] = rgb[0];
-							buffer[j++] = rgb[1];
-							buffer[j] = rgb[2];
+					if (Config::prism()) {
+						print_rgb_prism_tile(buffer, o, bw, tid, m->attribute(tx, ty));
+					} else {
+						const Tile *t = _tileset.const_tile_or_roof(tid);
+						for (int py = 0; py < TILE_SIZE; py++) {
+							for (int px = 0; px < TILE_SIZE; px++) {
+								const uchar *rgb = t->const_pixel(px, py);
+								size_t j = o + (py * bw + px) * NUM_CHANNELS;
+								buffer[j++] = rgb[0];
+								buffer[j++] = rgb[1];
+								buffer[j] = rgb[2];
+							}
 						}
 					}
 				}
@@ -138,6 +174,32 @@ Metatileset::Result Metatileset::read_metatiles(const char *f) {
 
 	fclose(file);
 	_mod_time = file_modified(f);
+	return (_result = Result::META_OK);
+}
+
+// Reads Prism's *_attributes.bin (16 bytes per metatile); silently drops attribute entries past _num_metatiles.
+Metatileset::Result Metatileset::read_attributes(const char *f) {
+	// Prism *_attributes.bin: 16 bytes per block, parallel to *_metatiles.bin.
+	FILE *file = fl_fopen(f, "rb");
+	if (file == NULL) { return (_result = Result::META_BAD_FILE); } // cannot load file
+
+	uchar data[METATILE_SIZE * METATILE_SIZE] = {};
+	size_t i = 0;
+	while (!feof(file)) {
+		size_t c = fread(data, 1, METATILE_SIZE * METATILE_SIZE, file);
+		if (!c) { break; } // end of file
+		if (c < METATILE_SIZE * METATILE_SIZE) { fclose(file); return (_result = Result::META_TOO_SHORT); }
+		if (i >= _num_metatiles) { break; } // ignore attributes past the loaded metatiles
+		Metatile *mt = _metatiles[i++];
+		for (int y = 0; y < METATILE_SIZE; y++) {
+			for (int x = 0; x < METATILE_SIZE; x++) {
+				mt->attribute(x, y, data[y * METATILE_SIZE + x]);
+			}
+		}
+	}
+
+	fclose(file);
+	_mod_time_attr = file_modified(f);
 	return (_result = Result::META_OK);
 }
 

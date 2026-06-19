@@ -44,8 +44,11 @@ void Tileset::clear_roof_graphics() {
 
 void Tileset::update_palettes(Palettes l) {
 	_palettes = l;
-	bool allow_256_tiles = Config::allow_256_tiles();
+	bool allow_256_tiles = Config::allow_256_tiles() || Config::prism();
 	for (int i = 0; i < MAX_NUM_TILES; i++) {
+		// Map tile indices to accommodate Game Boy's VRAM bank switching
+		// When not using 256 tiles: tiles 0x60-0xDF are shifted to 0x80-0xFF
+		// This handles the Game Boy's VRAM layout where tiles 0x80-0xFF are in a separate bank
 		int j = (!allow_256_tiles && i >= 0x60) ? (i >= 0xE0 ? i - 0x80 : i + 0x20) : i;
 		_tiles[j]->update_palettes(l);
 		_roof_tiles[j]->update_palettes(l);
@@ -142,8 +145,12 @@ Tileset::Result Tileset::read_graphics(const char *f, const char *bf, const char
 	_num_tiles = _num_before_tiles + (an ? _num_mid_tiles + an : mn);
 
 	_palettes = l;
-	bool allow_256_tiles = Config::allow_256_tiles();
+	// Prism addresses tiles linearly (tile_id + VRAM-bank*128), so keep the 256-tile layout.
+	bool allow_256_tiles = Config::allow_256_tiles() || Config::prism();
 	for (int i = 0; i < MAX_NUM_TILES; i++) {
+		// Map tile indices to accommodate Game Boy's VRAM bank switching
+		// When not using 256 tiles: tiles 0x60-0xDF are shifted to 0x80-0xFF
+		// This handles the Game Boy's VRAM layout where tiles 0x80-0xFF are in a separate bank
 		int j = (!allow_256_tiles && i >= 0x60) ? (i >= 0xE0 ? i - 0x80 : i + 0x20) : i;
 		Tile *t = _tiles[j];
 		if ((size_t)i < bn) {
@@ -192,6 +199,9 @@ Tileset::Result Tileset::read_roof_graphics(const char *f) {
 	bool allow_256_tiles = Config::allow_256_tiles();
 	for (size_t i = 0; i < _num_roof_tiles; i++) {
 		int k = (int)i + FIRST_ROOF_TILE_ID;
+		// Map tile indices to accommodate Game Boy's VRAM bank switching
+		// When not using 256 tiles: tiles 0x60-0xDF are shifted to 0x80-0xFF
+		// This handles the Game Boy's VRAM layout where tiles 0x80-0xFF are in a separate bank
 		int j = (!allow_256_tiles && k >= 0x60) ? (k >= 0xE0 ? k - 0x80 : k + 0x20) : k;
 		Tile *t = _roof_tiles[j];
 		read_tile(t, ti, (uint8_t)k, i);

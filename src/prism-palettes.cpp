@@ -66,7 +66,6 @@ int Prism_Palettes::row_for_palettes(Palettes pal) {
 }
 
 // Resolve 8 palette slots for the given environment and time of day
-// Each slot contains 4 hues with 3 color channels (RGB) converted to 8-bit values
 void Prism_Palettes::resolve(const std::string &environment, Palettes tod, Prism_Pal out[PRISM_NUM_SLOTS]) const {
 	int table = table_for_environment(environment);
 	int row = row_for_palettes(tod);

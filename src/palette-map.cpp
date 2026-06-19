@@ -25,6 +25,12 @@ void Palette_Map::clear() {
 Palette_Map::Result Palette_Map::read_from(const char *f) {
 	clear();
 
+	// Prism assigns palettes per tile-position via binary attributes, not a tilepal
+	// palette map; leave the map empty (drawing uses the Prism attribute path).
+	if (Config::prism()) {
+		return (_result = Result::PALETTE_OK);
+	}
+
 	std::ifstream ifs;
 	open_ifstream(ifs, f);
 	if (ifs.good()) {
