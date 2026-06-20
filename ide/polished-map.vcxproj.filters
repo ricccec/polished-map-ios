@@ -15,117 +15,117 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\image.cpp">
+    <ClCompile Include="..\src\model\image.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\main.cpp">
+    <ClCompile Include="..\src\app\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\modal-dialog.cpp">
+    <ClCompile Include="..\src\windows\modal-dialog.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\widgets.cpp">
+    <ClCompile Include="..\src\widgets\widgets.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\main-window.cpp">
+    <ClCompile Include="..\src\app\main-window.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\themes.cpp">
+    <ClCompile Include="..\src\util\themes.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\tileset.cpp">
+    <ClCompile Include="..\src\model\tileset.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\palette-map.cpp">
+    <ClCompile Include="..\src\model\palette-map.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\tile.cpp">
+    <ClCompile Include="..\src\model\tile.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\metatileset.cpp">
+    <ClCompile Include="..\src\model\metatileset.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\metatile.cpp">
+    <ClCompile Include="..\src\model\metatile.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\option-dialogs.cpp">
+    <ClCompile Include="..\src\windows\option-dialogs.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\utils.cpp">
+    <ClCompile Include="..\src\util\utils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\config.cpp">
+    <ClCompile Include="..\src\io\config.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\map.cpp">
+    <ClCompile Include="..\src\model\map.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\map-buttons.cpp">
+    <ClCompile Include="..\src\widgets\map-buttons.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\tiled-image.cpp">
+    <ClCompile Include="..\src\model\tiled-image.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\help-window.cpp">
+    <ClCompile Include="..\src\windows\help-window.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\block-window.cpp">
+    <ClCompile Include="..\src\windows\block-window.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\tileset-window.cpp">
+    <ClCompile Include="..\src\windows\tileset-window.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\colors.cpp">
+    <ClCompile Include="..\src\model\colors.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\directory-chooser.cpp">
+    <ClCompile Include="..\src\windows\directory-chooser.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\preferences.cpp">
+    <ClCompile Include="..\src\io\preferences.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\roof-window.cpp">
+    <ClCompile Include="..\src\windows\roof-window.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\hex-spinner.cpp">
+    <ClCompile Include="..\src\widgets\hex-spinner.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\event.cpp">
+    <ClCompile Include="..\src\model\event.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\map-events.cpp">
+    <ClCompile Include="..\src\model\map-events.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\gameboy-screen.cpp">
+    <ClCompile Include="..\src\widgets\gameboy-screen.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\ruler.cpp">
+    <ClCompile Include="..\src\widgets\ruler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\palette-window.cpp">
+    <ClCompile Include="..\src\windows\palette-window.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\parse-asm.cpp">
+    <ClCompile Include="..\src\io\parse-asm.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\image.h">
+    <ClInclude Include="..\src\model\image.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\modal-dialog.h">
+    <ClInclude Include="..\src\windows\modal-dialog.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\utils.h">
+    <ClInclude Include="..\src\util\utils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\widgets.h">
+    <ClInclude Include="..\src\widgets\widgets.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\main-window.h">
+    <ClInclude Include="..\src\app\main-window.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\themes.h">
+    <ClInclude Include="..\src\util\themes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\resource.h">
@@ -137,76 +137,76 @@
     <ClInclude Include="..\src\icons.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\tileset.h">
+    <ClInclude Include="..\src\model\tileset.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\palette-map.h">
+    <ClInclude Include="..\src\model\palette-map.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\tile.h">
+    <ClInclude Include="..\src\model\tile.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\metatileset.h">
+    <ClInclude Include="..\src\model\metatileset.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\metatile.h">
+    <ClInclude Include="..\src\model\metatile.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\option-dialogs.h">
+    <ClInclude Include="..\src\windows\option-dialogs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\config.h">
+    <ClInclude Include="..\src\io\config.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\map.h">
+    <ClInclude Include="..\src\model\map.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\map-buttons.h">
+    <ClInclude Include="..\src\widgets\map-buttons.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\tiled-image.h">
+    <ClInclude Include="..\src\model\tiled-image.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\help-window.h">
+    <ClInclude Include="..\src\windows\help-window.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\block-window.h">
+    <ClInclude Include="..\src\windows\block-window.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\tileset-window.h">
+    <ClInclude Include="..\src\windows\tileset-window.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\colors.h">
+    <ClInclude Include="..\src\model\colors.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\directory-chooser.h">
+    <ClInclude Include="..\src\windows\directory-chooser.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\preferences.h">
+    <ClInclude Include="..\src\io\preferences.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\roof-window.h">
+    <ClInclude Include="..\src\windows\roof-window.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\hex-spinner.h">
+    <ClInclude Include="..\src\widgets\hex-spinner.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\event.h">
+    <ClInclude Include="..\src\model\event.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\map-events.h">
+    <ClInclude Include="..\src\model\map-events.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\gameboy-screen.h">
+    <ClInclude Include="..\src\widgets\gameboy-screen.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\ruler.h">
+    <ClInclude Include="..\src\widgets\ruler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\palette-window.h">
+    <ClInclude Include="..\src\windows\palette-window.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\parse-asm.h">
+    <ClInclude Include="..\src\io\parse-asm.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

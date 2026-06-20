@@ -23,18 +23,24 @@ tmpdir = tmp
 debugdir = tmp/debug
 bindir = bin
 
+# Sources live in subfolders of src/; add every src subdir (and res) to the
+# include path so the existing #include "foo.h" lines resolve regardless of
+# which folder a header lives in.
+INCDIRS := $(shell find $(srcdir) -type d) $(resdir)
+INCFLAGS := $(addprefix -I,$(INCDIRS))
+
 ifdef MACOS
-CXXFLAGS = -std=c++17 --stdlib=libc++ -isystem ./include -isystem /usr/include -I$(srcdir) -I$(resdir) -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_THREAD_SAFE -D_REENTRANT -Wno-narrowing
+CXXFLAGS = -std=c++17 --stdlib=libc++ -isystem ./include -isystem /usr/include $(INCFLAGS) -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_THREAD_SAFE -D_REENTRANT -Wno-narrowing
 else
-CXXFLAGS = -std=c++17 -I$(srcdir) -I$(resdir) $(shell fltk-config --use-images --cxxflags)
+CXXFLAGS = -std=c++17 $(INCFLAGS) $(shell fltk-config --use-images --cxxflags)
 endif
 LDFLAGS = $(shell fltk-config --use-images --ldflags) $(shell pkg-config --libs libpng xpm)
 
 RELEASEFLAGS = -DNDEBUG -O3 -flto -march=native
 DEBUGFLAGS = -DDEBUG -D_DEBUG -O0 -g -ggdb3 -Wall -Wextra -pedantic -Wno-unknown-pragmas -Wno-sign-compare -Wno-unused-parameter
 
-COMMON = $(wildcard $(srcdir)/*.h) $(wildcard $(resdir)/*.xpm)
-SOURCES = $(wildcard $(srcdir)/*.cpp)
+COMMON = $(shell find $(srcdir) -name '*.h') $(wildcard $(resdir)/*.xpm)
+SOURCES = $(shell find $(srcdir) -name '*.cpp')
 OBJECTS = $(SOURCES:$(srcdir)/%.cpp=$(tmpdir)/%.o)
 DEBUGOBJECTS = $(SOURCES:$(srcdir)/%.cpp=$(debugdir)/%.o)
 TARGET = $(bindir)/$(polishedmap)

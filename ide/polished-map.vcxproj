@@ -64,7 +64,7 @@
       <PreprocessorDefinitions>WIN32;NOMINMAX;_CRT_SECURE_NO_WARNINGS;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <DisableSpecificWarnings>4068;4351</DisableSpecificWarnings>
-      <AdditionalIncludeDirectories>.;..\include;..\res</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.;..\include;..\res;..\src;..\src\app;..\src\windows;..\src\widgets;..\src\model;..\src\io;..\src\util</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <MinimalRebuild>false</MinimalRebuild>
       <PreprocessToFile>false</PreprocessToFile>
@@ -92,7 +92,7 @@
       <PreprocessorDefinitions>WIN32;NOMINMAX;_CRT_SECURE_NO_WARNINGS;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <DisableSpecificWarnings>4068;4351</DisableSpecificWarnings>
-      <AdditionalIncludeDirectories>.;..\include;..\res</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.;..\include;..\res;..\src;..\src\app;..\src\windows;..\src\widgets;..\src\model;..\src\io;..\src\util</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <FloatingPointModel>Fast</FloatingPointModel>
       <DebugInformationFormat>None</DebugInformationFormat>
@@ -111,72 +111,72 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\colors.cpp" />
-    <ClCompile Include="..\src\config.cpp" />
-    <ClCompile Include="..\src\directory-chooser.cpp" />
-    <ClCompile Include="..\src\event.cpp" />
-    <ClCompile Include="..\src\gameboy-screen.cpp" />
-    <ClCompile Include="..\src\help-window.cpp" />
-    <ClCompile Include="..\src\hex-spinner.cpp" />
-    <ClCompile Include="..\src\image.cpp" />
-    <ClCompile Include="..\src\main.cpp" />
-    <ClCompile Include="..\src\main-window.cpp" />
-    <ClCompile Include="..\src\map-buttons.cpp" />
-    <ClCompile Include="..\src\map-events.cpp" />
-    <ClCompile Include="..\src\map.cpp" />
-    <ClCompile Include="..\src\metatile.cpp" />
-    <ClCompile Include="..\src\metatileset.cpp" />
-    <ClCompile Include="..\src\modal-dialog.cpp" />
-    <ClCompile Include="..\src\option-dialogs.cpp" />
-    <ClCompile Include="..\src\palette-map.cpp" />
-    <ClCompile Include="..\src\palette-window.cpp" />
-    <ClCompile Include="..\src\parse-asm.cpp" />
-    <ClCompile Include="..\src\preferences.cpp" />
-    <ClCompile Include="..\src\roof-window.cpp" />
-    <ClCompile Include="..\src\ruler.cpp" />
-    <ClCompile Include="..\src\themes.cpp" />
-    <ClCompile Include="..\src\tile.cpp" />
-    <ClCompile Include="..\src\tiled-image.cpp" />
-    <ClCompile Include="..\src\block-window.cpp" />
-    <ClCompile Include="..\src\tileset-window.cpp" />
-    <ClCompile Include="..\src\tileset.cpp" />
-    <ClCompile Include="..\src\utils.cpp" />
-    <ClCompile Include="..\src\widgets.cpp" />
+    <ClCompile Include="..\src\model\colors.cpp" />
+    <ClCompile Include="..\src\io\config.cpp" />
+    <ClCompile Include="..\src\windows\directory-chooser.cpp" />
+    <ClCompile Include="..\src\model\event.cpp" />
+    <ClCompile Include="..\src\widgets\gameboy-screen.cpp" />
+    <ClCompile Include="..\src\windows\help-window.cpp" />
+    <ClCompile Include="..\src\widgets\hex-spinner.cpp" />
+    <ClCompile Include="..\src\model\image.cpp" />
+    <ClCompile Include="..\src\app\main.cpp" />
+    <ClCompile Include="..\src\app\main-window.cpp" />
+    <ClCompile Include="..\src\widgets\map-buttons.cpp" />
+    <ClCompile Include="..\src\model\map-events.cpp" />
+    <ClCompile Include="..\src\model\map.cpp" />
+    <ClCompile Include="..\src\model\metatile.cpp" />
+    <ClCompile Include="..\src\model\metatileset.cpp" />
+    <ClCompile Include="..\src\windows\modal-dialog.cpp" />
+    <ClCompile Include="..\src\windows\option-dialogs.cpp" />
+    <ClCompile Include="..\src\model\palette-map.cpp" />
+    <ClCompile Include="..\src\windows\palette-window.cpp" />
+    <ClCompile Include="..\src\io\parse-asm.cpp" />
+    <ClCompile Include="..\src\io\preferences.cpp" />
+    <ClCompile Include="..\src\windows\roof-window.cpp" />
+    <ClCompile Include="..\src\widgets\ruler.cpp" />
+    <ClCompile Include="..\src\util\themes.cpp" />
+    <ClCompile Include="..\src\model\tile.cpp" />
+    <ClCompile Include="..\src\model\tiled-image.cpp" />
+    <ClCompile Include="..\src\windows\block-window.cpp" />
+    <ClCompile Include="..\src\windows\tileset-window.cpp" />
+    <ClCompile Include="..\src\model\tileset.cpp" />
+    <ClCompile Include="..\src\util\utils.cpp" />
+    <ClCompile Include="..\src\widgets\widgets.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\colors.h" />
-    <ClInclude Include="..\src\config.h" />
-    <ClInclude Include="..\src\directory-chooser.h" />
-    <ClInclude Include="..\src\event.h" />
-    <ClInclude Include="..\src\gameboy-screen.h" />
-    <ClInclude Include="..\src\help-window.h" />
-    <ClInclude Include="..\src\hex-spinner.h" />
+    <ClInclude Include="..\src\model\colors.h" />
+    <ClInclude Include="..\src\io\config.h" />
+    <ClInclude Include="..\src\windows\directory-chooser.h" />
+    <ClInclude Include="..\src\model\event.h" />
+    <ClInclude Include="..\src\widgets\gameboy-screen.h" />
+    <ClInclude Include="..\src\windows\help-window.h" />
+    <ClInclude Include="..\src\widgets\hex-spinner.h" />
     <ClInclude Include="..\src\icons.h" />
-    <ClInclude Include="..\src\image.h" />
-    <ClInclude Include="..\src\main-window.h" />
-    <ClInclude Include="..\src\map-buttons.h" />
-    <ClInclude Include="..\src\map-events.h" />
-    <ClInclude Include="..\src\map.h" />
-    <ClInclude Include="..\src\metatile.h" />
-    <ClInclude Include="..\src\metatileset.h" />
-    <ClInclude Include="..\src\modal-dialog.h" />
-    <ClInclude Include="..\src\option-dialogs.h" />
-    <ClInclude Include="..\src\palette-map.h" />
-    <ClInclude Include="..\src\palette-window.h" />
-    <ClInclude Include="..\src\parse-asm.h" />
-    <ClInclude Include="..\src\preferences.h" />
+    <ClInclude Include="..\src\model\image.h" />
+    <ClInclude Include="..\src\app\main-window.h" />
+    <ClInclude Include="..\src\widgets\map-buttons.h" />
+    <ClInclude Include="..\src\model\map-events.h" />
+    <ClInclude Include="..\src\model\map.h" />
+    <ClInclude Include="..\src\model\metatile.h" />
+    <ClInclude Include="..\src\model\metatileset.h" />
+    <ClInclude Include="..\src\windows\modal-dialog.h" />
+    <ClInclude Include="..\src\windows\option-dialogs.h" />
+    <ClInclude Include="..\src\model\palette-map.h" />
+    <ClInclude Include="..\src\windows\palette-window.h" />
+    <ClInclude Include="..\src\io\parse-asm.h" />
+    <ClInclude Include="..\src\io\preferences.h" />
     <ClInclude Include="..\src\resource.h" />
-    <ClInclude Include="..\src\roof-window.h" />
-    <ClInclude Include="..\src\ruler.h" />
-    <ClInclude Include="..\src\themes.h" />
-    <ClInclude Include="..\src\tile.h" />
-    <ClInclude Include="..\src\tiled-image.h" />
-    <ClInclude Include="..\src\block-window.h" />
-    <ClInclude Include="..\src\tileset-window.h" />
-    <ClInclude Include="..\src\tileset.h" />
-    <ClInclude Include="..\src\utils.h" />
+    <ClInclude Include="..\src\windows\roof-window.h" />
+    <ClInclude Include="..\src\widgets\ruler.h" />
+    <ClInclude Include="..\src\util\themes.h" />
+    <ClInclude Include="..\src\model\tile.h" />
+    <ClInclude Include="..\src\model\tiled-image.h" />
+    <ClInclude Include="..\src\windows\block-window.h" />
+    <ClInclude Include="..\src\windows\tileset-window.h" />
+    <ClInclude Include="..\src\model\tileset.h" />
+    <ClInclude Include="..\src\util\utils.h" />
     <ClInclude Include="..\src\version.h" />
-    <ClInclude Include="..\src\widgets.h" />
+    <ClInclude Include="..\src\widgets\widgets.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\res\add-sub.xpm" />
