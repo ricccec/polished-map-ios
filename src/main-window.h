@@ -2,6 +2,8 @@
 #define MAIN_WINDOW_H
 
 #include <unordered_map>
+#include <vector>
+#include <deque>
 #include <climits>
 
 #pragma warning(push, 0)
@@ -33,6 +35,9 @@
 #define NUM_RECENT 10
 
 enum class Mode { BLOCKS, EVENTS };
+
+// Which subset the metatile picker shows. The filter text box applies on top of each.
+enum class Picker_Tab { ALL, FAVORITES, RECENT };
 
 class Main_Window : public Fl_Overlay_Window {
 private:
@@ -66,6 +71,9 @@ private:
 		*_show_priority_tb, *_gameboy_screen_tb;
 	Toolbar_Radio_Button *_blocks_mode_tb, *_events_mode_tb;
 	Dropdown *_palettes;
+	OS_Input *_metatile_filter;
+	Fl_Group *_picker_tabs;
+	Toolbar_Radio_Button *_tab_all, *_tab_favorites, *_tab_recent;
 	// GUI outputs
 	Ruler *_hor_ruler, *_ver_ruler, *_corner_ruler;
 	Label *_metatile_count, *_map_dimensions, *_hover_id, *_hover_xy, *_hover_event;
@@ -107,6 +115,12 @@ private:
 	// Metatile button properties
 	Metatile_Button *_metatile_buttons[MAX_NUM_METATILES];
 	Metatile_Button *_selected = NULL;
+	// Metatile picker: filter + All/Favorites/Recent tabs
+	Picker_Tab _picker_tab = Picker_Tab::ALL;
+	std::vector<uint8_t> _visible_metatiles;
+	int _id_to_visible[MAX_NUM_METATILES];
+	std::deque<uint8_t> _recent_metatiles;
+	std::vector<uint8_t> _favorite_metatiles;
 	// Work properties
 	Mode _mode = Mode::BLOCKS;
 	Roof_Palettes _roof_palettes = Roof_Palettes::ROOF_DAY_NITE;
@@ -183,7 +197,7 @@ public:
 	void open_map(const char *filename);
 private:
 	inline void mode(Mode m) { _mode = m; }
-	int handle_hotkey(int key);
+	int handle_metatile_hotkey(int key);
 	void update_active_controls(void);
 	void update_priority_controls(void);
 	void update_monochrome_controls(void);
@@ -216,6 +230,17 @@ private:
 	void update_labels(void);
 	void update_palettes(void);
 	void select_metatile(Metatile_Button *mb);
+	// Metatile picker: filter + All/Favorites/Recent tabs
+	bool metatile_matches_filter(uint8_t id, const std::string &filter);
+	void rebuild_visible_metatiles(void);
+	inline int visible_index(uint8_t id) const { return _id_to_visible[id]; }
+	void ensure_visible(uint8_t id);
+	void update_picker(void);
+	void push_recent_metatile(uint8_t id);
+	bool is_favorite(uint8_t id) const;
+	void toggle_favorite(uint8_t id);
+	void load_editmeta(void);
+	void save_editmeta(void);
 	// Drag-and-drop
 	static void drag_and_drop_cb(DnD_Receiver *dndr, Main_Window *mw);
 	// File menu
@@ -323,6 +348,8 @@ private:
 	static void about_cb(Fl_Widget *w, Main_Window *mw);
 	// Metatiles sidebar
 	static void select_metatile_cb(Metatile_Button *mb, Main_Window *mw);
+	static void filter_cb(Fl_Widget *w, Main_Window *mw);
+	static void picker_tab_cb(Fl_Widget *w, Main_Window *mw);
 	// Map
 	static void change_block_cb(Block *b, Main_Window *mw);
 	static void change_event_cb(Event *e, Main_Window *mw);

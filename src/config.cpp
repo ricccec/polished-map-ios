@@ -202,6 +202,13 @@ void Config::attributes_path(char *dest, const char *root, const char *tileset) 
 	_attributes_path(dest, root, name);
 }
 
+// Path to the Polished Map editor sidecar (per-tileset favorites, and later stamps/scratch).
+// This is a file Polished Map owns and always writes to the same deterministic location,
+// so unlike the read-probing helpers above it has a single canonical path.
+void Config::editmeta_path(char *dest, const char *root, const char *tileset) {
+	sprintf(dest, "%stilesets" DIR_SEP "%s.polishedmap", root, tileset);
+}
+
 static bool _collisions_path(char *dest, const char *root, const char *tileset) {
 	// try data/tilesets/*_collision.asm (pokecrystal)
 	sprintf(dest, "%sdata" DIR_SEP "tilesets" DIR_SEP "%s_collision.asm", root, tileset);
