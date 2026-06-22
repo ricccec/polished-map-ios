@@ -1,0 +1,26 @@
+{
+    "configurations": [
+        {
+            "name": "Mac",
+            "compilerPath": "/usr/bin/clang",
+            "cStandard": "c17",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "macos-clang-arm64",
+            "includePath": [
+                "${workspaceFolder}/src/**",
+                "${workspaceFolder}/res",
+                "${workspaceFolder}/include",
+                "/usr/local/include",
+                "/usr/local/include/FL/images"
+            ],
+            "defines": [
+                "_LARGEFILE_SOURCE",
+                "_LARGEFILE64_SOURCE",
+                "_FILE_OFFSET_BITS=64",
+                "_THREAD_SAFE",
+                "_REENTRANT"
+            ]
+        }
+    ],
+    "version": 4
+}
