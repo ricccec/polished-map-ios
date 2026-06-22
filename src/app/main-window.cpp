@@ -1,6 +1,8 @@
 #include <cstdlib>
+#include <cstring>
 #include <queue>
 #include <utility>
+#include <algorithm>
 
 #pragma warning(push, 0)
 #include <FL/x.H>
@@ -201,6 +203,27 @@ Main_Window::Main_Window(int x, int y, int w, int h, const char *) : Fl_Overlay_
 	_sidebar->type(Fl_Scroll::VERTICAL_ALWAYS);
 	_sidebar->end();
 	begin();
+
+	// Metatile picker: All/Favorites/Recent tab strip + filter input (geometry set in update_layout)
+	int fx = _sidebar->x(), fy = _sidebar->y();
+	_picker_tabs = new Fl_Group(fx, fy, sw, 24);
+	_tab_all = new Toolbar_Radio_Button(fx, fy, sw / 3, 24, "All");
+	_tab_favorites = new Toolbar_Radio_Button(fx, fy, sw / 3, 24, "Fav");
+	_tab_recent = new Toolbar_Radio_Button(fx, fy, sw / 3, 24, "Recent");
+	_tab_all->callback((Fl_Callback *)picker_tab_cb, this);
+	_tab_favorites->callback((Fl_Callback *)picker_tab_cb, this);
+	_tab_recent->callback((Fl_Callback *)picker_tab_cb, this);
+	_tab_all->tooltip("Show all metatiles");
+	_tab_favorites->tooltip("Show favorite (pinned) metatiles");
+	_tab_recent->tooltip("Show recently painted metatiles");
+	_tab_all->setonly();
+	_picker_tabs->end();
+	begin();
+	_metatile_filter = new OS_Input(fx, fy, sw, 22);
+	_metatile_filter->callback((Fl_Callback *)filter_cb, this);
+	_metatile_filter->when(FL_WHEN_CHANGED);
+	_metatile_filter->tooltip("Filter metatiles by id, hotkey digit, or collision");
+	std::fill_n(_id_to_visible, MAX_NUM_METATILES, -1);
 
 	// Rulers
 	int rs = Fl::scrollbar_size();
@@ -799,6 +822,7 @@ Main_Window::Main_Window(int x, int y, int w, int h, const char *) : Fl_Overlay_
 	update_icons();
 	update_recent_maps();
 	update_active_controls();
+	update_layout(); // position the picker tabs/filter so they don't overlap the empty sidebar
 }
 
 Main_Window::~Main_Window() {
@@ -970,14 +994,20 @@ int Main_Window::handle(int event) {
 	case FL_SHORTCUT:
 		key = Fl::event_key();
 		//if (key & FL_KP == FL_KP) { key -= FL_KP; } // normalize numpad keys into digits
-		if (handle_hotkey(key)) { return 1; }
+		if (handle_metatile_hotkey(key)) { return 1; }
+		// F (no modifiers) toggles the selected metatile as a favorite
+		if (key == 'f' && !Fl::event_state(FL_CTRL | FL_META | FL_ALT | FL_SHIFT)
+			&& Fl::focus() != _metatile_filter && _map.size() && _selected) {
+			toggle_favorite(_selected->id());
+			return 1;
+		}
 		[[fallthrough]];
 	default:
 		return Fl_Overlay_Window::handle(event);
 	}
 }
 
-int Main_Window::handle_hotkey(int key) {
+int Main_Window::handle_metatile_hotkey(int key) {
 	if (!_map.size()) { return 0; }
 	if ((key & FL_KP) == FL_KP) { key -= FL_KP; } // normalize numpad keys into digits
 	if (key < '0' || key > '9') { return 0; } // 0-9 keys only
@@ -1016,6 +1046,7 @@ int Main_Window::handle_hotkey(int key) {
 		if (s == no_metatile()) { return 0; }
 		uint8_t id = s->second;
 		if (id >= _metatileset.size()) { return 0; }
+		ensure_visible(id); // clear the filter if the hotkey's tile is hidden
 		select_metatile(_metatile_buttons[id]);
 		return 1;
 	}

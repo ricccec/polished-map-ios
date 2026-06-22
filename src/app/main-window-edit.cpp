@@ -151,6 +151,19 @@ void Main_Window::force_add_sub_metatiles(size_t s, size_t n) {
 	update_labels();
 	update_status((Block *)NULL);
 
+	// Prune trays for the new metatile count, then refresh the filtered list + layout
+	size_t cnt = _metatileset.size();
+	for (auto it = _recent_metatiles.begin(); it != _recent_metatiles.end();) {
+		if (*it >= cnt) { it = _recent_metatiles.erase(it); } else { ++it; }
+	}
+	bool favs_changed = false;
+	for (auto it = _favorite_metatiles.begin(); it != _favorite_metatiles.end();) {
+		if (*it >= cnt) { it = _favorite_metatiles.erase(it); favs_changed = true; } else { ++it; }
+	}
+	if (favs_changed) { save_editmeta(); }
+	rebuild_visible_metatiles();
+	update_layout();
+
 	redraw();
 }
 

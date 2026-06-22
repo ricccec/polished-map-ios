@@ -1,6 +1,8 @@
 #include <cstdlib>
+#include <cstring>
 #include <queue>
 #include <utility>
+#include <algorithm>
 
 #pragma warning(push, 0)
 #include <FL/x.H>
@@ -338,24 +340,50 @@ void Main_Window::update_zoom() {
 void Main_Window::update_layout() {
 	init_sizes();
 	int ms = metatile_size();
-	size_t n = _metatileset.size();
 	int rs = Fl::scrollbar_size();
-	_sidebar->size(ms * METATILES_PER_ROW + rs, _sidebar->h());
-	int ox = _sidebar->w() + (rulers() ? rs : 0);
+	int sw = ms * METATILES_PER_ROW + rs;
+	// The left column spans from just below the toolbar (top) down to the status bar.
+	// Anchor to those stable widgets — NOT to the sidebar, which we shrink below to make
+	// room for the filter/trays (reading its shrunken height would ratchet the top down
+	// further on every layout pass). The rulers and map stay anchored to the full column.
+	int sx = _sidebar->x();
+	int top = _toolbar->y() + _toolbar->h();
+	int fullh = _status_bar->y() - top;
+
+	// The tab strip and filter input occupy the top of the column; the grid fills the rest.
+	int tabsH = 24, filterH = 24;
+	_picker_tabs->resize(sx, top, sw, tabsH);
+	int tw = sw / 3;
+	_tab_all->resize(sx, top, tw, tabsH);
+	_tab_favorites->resize(sx + tw, top, tw, tabsH);
+	_tab_recent->resize(sx + 2 * tw, top, sw - 2 * tw, tabsH);
+	_metatile_filter->resize(sx, top + tabsH, sw, filterH);
+
+	int sidebar_top = top + tabsH + filterH;
+	_sidebar->resize(sx, sidebar_top, sw, fullh - (tabsH + filterH));
+
+	int ox = sw + (rulers() ? rs : 0);
 	int oy = rulers() ? rs : 0;
-	_hor_ruler->resize(ox, _sidebar->y(), w() - ox, rs);
-	_ver_ruler->resize(_sidebar->w(), _sidebar->y() + oy, rs, _sidebar->h() - oy);
-	_corner_ruler->resize(_sidebar->w(), _sidebar->y(), rs, rs);
-	_map_scroll->resize(ox, _sidebar->y() + oy, w() - ox, _sidebar->h() - oy);
+	_hor_ruler->resize(ox, top, w() - ox, rs);
+	_ver_ruler->resize(sw, top + oy, rs, fullh - oy);
+	_corner_ruler->resize(sw, top, rs, rs);
+	_map_scroll->resize(ox, top + oy, w() - ox, fullh - oy);
 	int gw = ((int)_map.width() + EVENT_MARGIN) * ms, gh = ((int)_map.height() + EVENT_MARGIN) * ms;
-	_map_group->resize(ox - _map_scroll->xposition(), _sidebar->y() + oy - _map_scroll->yposition(), gw, gh);
-	_sidebar->contents(ms * METATILES_PER_ROW, ms * (((int)n + METATILES_PER_ROW - 1) / METATILES_PER_ROW));
+	_map_group->resize(ox - _map_scroll->xposition(), top + oy - _map_scroll->yposition(), gw, gh);
+
+	int vn = (int)_visible_metatiles.size();
+	_sidebar->contents(sw, ms * ((vn + METATILES_PER_ROW - 1) / METATILES_PER_ROW));
 	_map_scroll->contents(_map_group->w(), _map_group->h());
-	int sx = _sidebar->x(), sy = _sidebar->y();
+	size_t n = _metatileset.size();
 	for (size_t i = 0; i < n; i++) {
-		Metatile_Button *mt = _metatile_buttons[i];
-		int dx = ms * (i % METATILES_PER_ROW), dy = ms * (i / METATILES_PER_ROW);
-		mt->resize(sx + dx, sy + dy, ms + 1, ms + 1);
+		_metatile_buttons[i]->hide();
+	}
+	int ssx = _sidebar->x(), ssy = _sidebar->y();
+	for (int vi = 0; vi < vn; vi++) {
+		Metatile_Button *mt = _metatile_buttons[_visible_metatiles[vi]];
+		int dx = ms * (vi % METATILES_PER_ROW), dy = ms * (vi / METATILES_PER_ROW);
+		mt->resize(ssx + dx, ssy + dy, ms + 1, ms + 1);
+		mt->show();
 	}
 	int mx = _map_group->x(), my = _map_group->y();
 	_map.resize_blocks(mx, my, ms);
@@ -386,14 +414,110 @@ void Main_Window::update_palettes() {
 void Main_Window::select_metatile(Metatile_Button *mb) {
 	_selected = mb;
 	_selected->setonly();
-	uint8_t id = mb->id();
+	int vi = visible_index(mb->id());
+	if (vi < 0) { return; } // selected tile is filtered out; nothing to scroll to
 	int ms = metatile_size();
-	if (ms * (id / METATILES_PER_ROW) >= _sidebar->yposition() + _sidebar->h() - ms / 2) {
-		_sidebar->scroll_to(0, ms * (id / METATILES_PER_ROW + 1) - _sidebar->h());
+	int row = vi / METATILES_PER_ROW;
+	if (ms * row >= _sidebar->yposition() + _sidebar->h() - ms / 2) {
+		_sidebar->scroll_to(0, ms * (row + 1) - _sidebar->h());
 		_sidebar->redraw();
 	}
-	else if (ms * (id / METATILES_PER_ROW + 1) <= _sidebar->yposition() + ms / 2) {
-		_sidebar->scroll_to(0, ms * (id / METATILES_PER_ROW));
+	else if (ms * (row + 1) <= _sidebar->yposition() + ms / 2) {
+		_sidebar->scroll_to(0, ms * row);
 		_sidebar->redraw();
 	}
+}
+
+bool Main_Window::metatile_matches_filter(uint8_t id, const std::string &filter) {
+	if (filter.empty()) { return true; }
+	char buf[16];
+	sprintf(buf, "%u", (unsigned)id);
+	if (std::string(buf).find(filter) != std::string::npos) { return true; }
+	sprintf(buf, "%02x", (unsigned)id);
+	if (std::string(buf).find(filter) != std::string::npos) { return true; }
+	auto hk = metatile_hotkey(id);
+	if (hk != no_hotkey()) {
+		const char *l = fl_shortcut_label(hk->second);
+		std::string h = l ? l : "";
+		lowercase(h);
+		if (!h.empty() && h.find(filter) != std::string::npos) { return true; }
+	}
+	Metatile *mt = _metatileset.metatile(id);
+	for (int q = 0; q < NUM_QUADRANTS; q++) {
+		std::string c = mt->collision((Quadrant)q);
+		lowercase(c);
+		if (!c.empty() && c.find(filter) != std::string::npos) { return true; }
+	}
+	return false;
+}
+
+void Main_Window::rebuild_visible_metatiles() {
+	_visible_metatiles.clear();
+	std::fill_n(_id_to_visible, MAX_NUM_METATILES, -1);
+	std::string filter = _metatile_filter ? _metatile_filter->value() : "";
+	lowercase(filter);
+	size_t n = _metatileset.size();
+	// Build the source order from the active tab, then apply the filter on top of it.
+	auto consider = [&](uint8_t id) {
+		if (id >= n || _id_to_visible[id] >= 0) { return; } // skip out-of-range or duplicates
+		if (!metatile_matches_filter(id, filter)) { return; }
+		_id_to_visible[id] = (int)_visible_metatiles.size();
+		_visible_metatiles.push_back(id);
+	};
+	switch (_picker_tab) {
+	case Picker_Tab::FAVORITES:
+		for (uint8_t id : _favorite_metatiles) { consider(id); } // pin order
+		break;
+	case Picker_Tab::RECENT:
+		for (uint8_t id : _recent_metatiles) { consider(id); } // newest first
+		break;
+	case Picker_Tab::ALL:
+	default:
+		for (size_t i = 0; i < n; i++) { consider((uint8_t)i); } // ascending id
+		break;
+	}
+}
+
+void Main_Window::ensure_visible(uint8_t id) {
+	if (visible_index(id) >= 0) { return; }
+	// Target isn't visible — it may be hidden by the active tab and/or the filter. Switch to
+	// the All tab and clear the filter so the selection always becomes visible.
+	_picker_tab = Picker_Tab::ALL;
+	_tab_all->setonly();
+	_metatile_filter->value("");
+	rebuild_visible_metatiles();
+	update_layout();
+	redraw();
+}
+
+void Main_Window::update_picker() {
+	rebuild_visible_metatiles();
+	update_layout();
+	redraw();
+}
+
+void Main_Window::push_recent_metatile(uint8_t id) {
+	if (!_recent_metatiles.empty() && _recent_metatiles.front() == id) { return; }
+	for (auto it = _recent_metatiles.begin(); it != _recent_metatiles.end(); ++it) {
+		if (*it == id) { _recent_metatiles.erase(it); break; }
+	}
+	_recent_metatiles.push_front(id);
+	if (_picker_tab == Picker_Tab::RECENT) { update_picker(); }
+}
+
+bool Main_Window::is_favorite(uint8_t id) const {
+	return std::find(_favorite_metatiles.begin(), _favorite_metatiles.end(), id) != _favorite_metatiles.end();
+}
+
+void Main_Window::toggle_favorite(uint8_t id) {
+	auto it = std::find(_favorite_metatiles.begin(), _favorite_metatiles.end(), id);
+	if (it != _favorite_metatiles.end()) {
+		_favorite_metatiles.erase(it);
+	}
+	else {
+		_favorite_metatiles.push_back(id);
+	}
+	save_editmeta();
+	if (_picker_tab == Picker_Tab::FAVORITES) { update_picker(); }
+	else { redraw(); } // refresh the right-click star state on the sidebar button
 }

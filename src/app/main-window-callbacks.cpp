@@ -1,6 +1,8 @@
 #include <cstdlib>
+#include <cstring>
 #include <queue>
 #include <utility>
+#include <algorithm>
 
 #pragma warning(push, 0)
 #include <FL/x.H>
@@ -152,6 +154,13 @@ void Main_Window::close_cb(Fl_Widget *, Main_Window *mw) {
 	mw->_copied = false;
 	mw->_hotkey_metatiles.clear();
 	mw->_metatile_hotkeys.clear();
+	mw->_metatile_filter->value("");
+	mw->_visible_metatiles.clear();
+	std::fill_n(mw->_id_to_visible, MAX_NUM_METATILES, -1);
+	mw->_recent_metatiles.clear();
+	mw->_favorite_metatiles.clear();
+	mw->_picker_tab = Picker_Tab::ALL;
+	mw->_tab_all->setonly();
 	mw->_map_group->clear();
 	mw->_map_group->size(0, 0);
 	mw->_map.clear();
@@ -1183,15 +1192,44 @@ void Main_Window::select_metatile_cb(Metatile_Button *mb, Main_Window *mw) {
 		mw->_selected = mb;
 		mw->_selected->setonly();
 		if (Fl::event_button() == FL_RIGHT_MOUSE) {
-			// Right-click to edit
-			Metatile *mt = mw->_metatileset.metatile(mb->id());
-			mw->_block_window->metatile(mt, mw->_has_collisions, mw->_metatileset.bin_collisions());
-			mw->_block_window->show(mw, mw->show_priority());
-			if (!mw->_block_window->canceled()) {
-				mw->edit_metatile(mt);
+			// Right-click context menu: edit the metatile or pin/unpin it as a favorite
+			uint8_t id = mb->id();
+			Fl_Menu_Item menu[] = {
+				{ "Edit...", 0, NULL, NULL, 0, FL_NORMAL_LABEL, OS_FONT, OS_FONT_SIZE, FL_FOREGROUND_COLOR },
+				{ mw->is_favorite(id) ? "Unpin favorite" : "Pin favorite", 0, NULL, NULL, 0,
+					FL_NORMAL_LABEL, OS_FONT, OS_FONT_SIZE, FL_FOREGROUND_COLOR },
+				{}
+			};
+			const Fl_Menu_Item *choice = menu->popup(Fl::event_x(), Fl::event_y());
+			if (choice == &menu[0]) {
+				Metatile *mt = mw->_metatileset.metatile(id);
+				mw->_block_window->metatile(mt, mw->_has_collisions, mw->_metatileset.bin_collisions());
+				mw->_block_window->show(mw, mw->show_priority());
+				if (!mw->_block_window->canceled()) {
+					mw->edit_metatile(mt);
+				}
+			}
+			else if (choice == &menu[1]) {
+				mw->toggle_favorite(id);
 			}
 		}
 	}
+}
+
+void Main_Window::filter_cb(Fl_Widget *, Main_Window *mw) {
+	mw->rebuild_visible_metatiles();
+	mw->update_layout();
+	mw->redraw();
+}
+
+void Main_Window::picker_tab_cb(Fl_Widget *w, Main_Window *mw) {
+	if (w == mw->_tab_favorites) { mw->_picker_tab = Picker_Tab::FAVORITES; }
+	else if (w == mw->_tab_recent) { mw->_picker_tab = Picker_Tab::RECENT; }
+	else { mw->_picker_tab = Picker_Tab::ALL; }
+	mw->rebuild_visible_metatiles();
+	mw->update_layout();
+	mw->_sidebar->scroll_to(0, 0);
+	mw->redraw();
 }
 
 void Main_Window::change_block_cb(Block *b, Main_Window *mw) {
@@ -1223,6 +1261,7 @@ void Main_Window::change_block_cb(Block *b, Main_Window *mw) {
 			b->id(id);
 			b->damage(1);
 		}
+		mw->push_recent_metatile(mw->_selected->id());
 		mw->_map.modified(true);
 		mw->update_status(b);
 	}
@@ -1230,6 +1269,7 @@ void Main_Window::change_block_cb(Block *b, Main_Window *mw) {
 		// Right-click to select
 		uint8_t id = b->id();
 		if (id >= mw->_metatileset.size()) { return; }
+		mw->ensure_visible(id);
 		mw->select_metatile(mw->_metatile_buttons[id]);
 	}
 }

@@ -1,4 +1,5 @@
 #include <cstdlib>
+#include <cstring>
 #include <queue>
 #include <utility>
 
@@ -90,6 +91,35 @@ void Main_Window::update_recent_maps() {
 	if (last > -1) {
 		_recent_mis[last]->flags |= FL_MENU_DIVIDER;
 	}
+}
+
+void Main_Window::save_editmeta() {
+	if (_directory.empty() || !_metatileset.size()) { return; }
+	char filename[FL_PATH_MAX] = {};
+	Config::editmeta_path(filename, _directory.c_str(), _metatileset.tileset().name());
+	FILE *file = fl_fopen(filename, "wb");
+	if (!file) { return; }
+	for (uint8_t id : _favorite_metatiles) {
+		fprintf(file, "favorite %u\n", (unsigned)id);
+	}
+	fclose(file);
+}
+
+void Main_Window::load_editmeta() {
+	_favorite_metatiles.clear();
+	if (_directory.empty()) { return; }
+	char filename[FL_PATH_MAX] = {};
+	Config::editmeta_path(filename, _directory.c_str(), _metatileset.tileset().name());
+	FILE *file = fl_fopen(filename, "rb");
+	if (!file) { return; }
+	char tag[32];
+	unsigned id;
+	while (fscanf(file, "%31s %u", tag, &id) == 2) {
+		if (strcmp(tag, "favorite") == 0 && id < _metatileset.size() && !is_favorite((uint8_t)id)) {
+			_favorite_metatiles.push_back((uint8_t)id);
+		}
+	}
+	fclose(file);
 }
 
 void Main_Window::open_map(const char *filename) {
@@ -238,6 +268,15 @@ void Main_Window::open_map(const char *directory, const char *filename) {
 		_selected = _metatile_buttons[0];
 	}
 	_copied = false;
+
+	// Metatile picker: reset to the All tab, clear filter/recents, and load this tileset's favorites
+	_picker_tab = Picker_Tab::ALL;
+	_tab_all->setonly();
+	_metatile_filter->value("");
+	_recent_metatiles.clear();
+	load_editmeta();
+	rebuild_visible_metatiles();
+	update_layout();
 
 	Tileset &tileset = _metatileset.tileset();
 	_block_window->tileset(&tileset);
