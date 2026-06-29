@@ -145,6 +145,12 @@ void Main_Window::close_cb(Fl_Widget *, Main_Window *mw) {
 		if (mw->_unsaved_dialog->canceled()) { return; }
 	}
 
+	// Persist and tear down the scratch canvas while the tileset path is still known
+	mw->save_scratch();
+	mw->_scratch_window->hide_window();
+	mw->_scratch_window->clear_canvas();
+	mw->_scratch_map.clear();
+
 	mw->label(PROGRAM_NAME);
 	mw->_sidebar->clear();
 	mw->_sidebar->scroll_to(0, 0);
@@ -474,6 +480,8 @@ void Main_Window::exit_cb(Fl_Widget *, Main_Window *mw) {
 		if (mw->_unsaved_dialog->canceled()) { return; }
 	}
 
+	mw->save_scratch();
+
 	/*if (mw->_edited_palettes) {
 		std::string msg = "The palettes have been edited!\n\n"
 			"Exit anyway?";
@@ -720,6 +728,7 @@ void Main_Window::full_screen_cb(Fl_Menu_ *m, Main_Window *mw) {
 void Main_Window::grid_cb(Fl_Menu_ *m, Main_Window *mw) {
 	SYNC_TB_WITH_M(mw->_grid_tb, m);
 	mw->redraw();
+	mw->_scratch_window->redraw();
 }
 
 void Main_Window::rulers_cb(Fl_Menu_ *m, Main_Window *mw) {
@@ -737,18 +746,21 @@ void Main_Window::zoom_cb(Fl_Menu_ *m, Main_Window *mw) {
 void Main_Window::ids_cb(Fl_Menu_ *m, Main_Window *mw) {
 	SYNC_TB_WITH_M(mw->_ids_tb, m);
 	mw->redraw();
+	mw->_scratch_window->redraw();
 }
 
 void Main_Window::hex_cb(Fl_Menu_ *m, Main_Window *mw) {
 	SYNC_TB_WITH_M(mw->_hex_tb, m);
 	mw->update_labels();
 	mw->redraw();
+	mw->_scratch_window->redraw();
 }
 
 void Main_Window::show_priority_cb(Fl_Menu_ *m, Main_Window *mw) {
 	SYNC_TB_WITH_M(mw->_show_priority_tb, m);
 	mw->update_labels();
 	mw->redraw();
+	mw->_scratch_window->redraw();
 }
 
 void Main_Window::gameboy_screen_cb(Fl_Menu_ *m, Main_Window *mw) {
@@ -1242,17 +1254,17 @@ void Main_Window::change_block_cb(Block *b, Main_Window *mw) {
 		}
 		if (Fl::event_shift()) {
 			// Shift+left-click to flood fill
-			mw->flood_fill(b, b->id(), mw->_selected->id());
+			mw->flood_fill(mw->_map, b, b->id(), mw->_selected->id());
 			mw->_map_group->redraw();
 		}
 		else if (Fl::event_ctrl()) {
 			// Ctrl+left-click to replace
-			mw->substitute_block(b->id(), mw->_selected->id());
+			mw->substitute_block(mw->_map, b->id(), mw->_selected->id());
 			mw->_map_group->redraw();
 		}
 		else if (Fl::event_alt()) {
 			// Alt+left-click to replace
-			mw->swap_blocks(b->id(), mw->_selected->id());
+			mw->swap_blocks(mw->_map, b->id(), mw->_selected->id());
 			mw->_map_group->redraw();
 		}
 		else {
@@ -1267,6 +1279,58 @@ void Main_Window::change_block_cb(Block *b, Main_Window *mw) {
 	}
 	else if (Fl::event_button() == FL_RIGHT_MOUSE) {
 		// Right-click to select
+		uint8_t id = b->id();
+		if (id >= mw->_metatileset.size()) { return; }
+		mw->ensure_visible(id);
+		mw->select_metatile(mw->_metatile_buttons[id]);
+	}
+}
+
+void Main_Window::open_scratch_canvas_cb(Fl_Widget *, Main_Window *mw) {
+	if (!mw->_metatileset.size()) { return; }
+	if (mw->_scratch_window->shown()) {
+		// Toggle: the shortcut closes the canvas if it's already up (close_cb saves + hides).
+		mw->save_scratch();
+		mw->_scratch_window->hide_window();
+		return;
+	}
+	if (!mw->_scratch_window->built()) {
+		mw->load_scratch();
+		mw->_scratch_window->build(mw);
+	}
+	mw->_scratch_window->show(mw);
+}
+
+void Main_Window::change_scratch_block_cb(Block *b, Main_Window *mw) {
+	if (!mw->_map_editable) { return; }
+	if (Fl::event_button() == FL_LEFT_MOUSE) {
+		if (!mw->_selected) { return; }
+		if (Fl::event_is_click()) {
+			mw->_scratch_map.remember();
+		}
+		if (Fl::event_shift()) {
+			// Shift+left-click to flood fill
+			mw->flood_fill(mw->_scratch_map, b, b->id(), mw->_selected->id());
+		}
+		else if (Fl::event_ctrl()) {
+			// Ctrl+left-click to replace
+			mw->substitute_block(mw->_scratch_map, b->id(), mw->_selected->id());
+		}
+		else if (Fl::event_alt()) {
+			// Alt+left-click to swap
+			mw->swap_blocks(mw->_scratch_map, b->id(), mw->_selected->id());
+		}
+		else {
+			// Left-click/drag to paint
+			b->id(mw->_selected->id());
+			b->damage(1);
+		}
+		mw->push_recent_metatile(mw->_selected->id());
+		mw->_scratch_map.modified(true);
+		mw->_scratch_window->redraw();
+	}
+	else if (Fl::event_button() == FL_RIGHT_MOUSE) {
+		// Right-click to pick: select this metatile into the main picker (the "pick bridge")
 		uint8_t id = b->id();
 		if (id >= mw->_metatileset.size()) { return; }
 		mw->ensure_visible(id);

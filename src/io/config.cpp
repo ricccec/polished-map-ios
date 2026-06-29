@@ -209,6 +209,13 @@ void Config::editmeta_path(char *dest, const char *root, const char *tileset) {
 	sprintf(dest, "%stilesets" DIR_SEP "%s.polishedmap", root, tileset);
 }
 
+// Path to the scratch-canvas sidecar (the freeform per-tileset assembly grid). Like
+// editmeta_path this is a file Polished Map owns at a single canonical location. The grid is
+// stored as a tiny line-based text file (dimensions header + one row of metatile ids per line).
+void Config::scratch_path(char *dest, const char *root, const char *tileset) {
+	sprintf(dest, "%stilesets" DIR_SEP "%s.scratch", root, tileset);
+}
+
 static bool _collisions_path(char *dest, const char *root, const char *tileset) {
 	// try data/tilesets/*_collision.asm (pokecrystal)
 	sprintf(dest, "%sdata" DIR_SEP "tilesets" DIR_SEP "%s_collision.asm", root, tileset);

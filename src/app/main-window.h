@@ -28,11 +28,15 @@
 #include "tileset-window.h"
 #include "roof-window.h"
 #include "palette-window.h"
+#include "scratch-window.h"
 #include "directory-chooser.h"
 
 #define METATILES_PER_ROW 4
 
 #define NUM_RECENT 10
+
+#define SCRATCH_DEFAULT_W 16
+#define SCRATCH_DEFAULT_H 16
 
 enum class Mode { BLOCKS, EVENTS };
 
@@ -40,6 +44,7 @@ enum class Mode { BLOCKS, EVENTS };
 enum class Picker_Tab { ALL, FAVORITES, RECENT };
 
 class Main_Window : public Fl_Overlay_Window {
+	friend class Scratch_Window;
 private:
 	// GUI containers
 	Fl_Sys_Menu_Bar *_menu_bar;
@@ -84,7 +89,7 @@ private:
 		*_save_roof_mi = NULL, *_save_event_script_mi = NULL, *_print_mi = NULL;
 	Fl_Menu_Item *_undo_mi = NULL, *_redo_mi = NULL, *_copy_block_mi = NULL, *_paste_block_mi = NULL, *_swap_block_mi = NULL;
 	Fl_Menu_Item *_resize_blockset_mi = NULL, *_resize_map_mi = NULL, *_change_tileset_mi = NULL, *_change_roof_mi = NULL,
-		*_edit_tileset_mi = NULL, *_edit_roof_mi = NULL;
+		*_edit_tileset_mi = NULL, *_edit_roof_mi = NULL, *_scratch_canvas_mi = NULL;
 	// Dialogs
 	Directory_Chooser *_new_dir_chooser;
 	Fl_Native_File_Chooser *_blk_open_chooser, *_blk_save_chooser, *_pal_load_chooser, *_pal_save_chooser, *_roof_chooser,
@@ -104,11 +109,13 @@ private:
 	Roof_Window *_roof_window;
 	Palette_Window *_palette_window;
 	Monochrome_Palette_Window *_monochrome_palette_window;
+	Scratch_Window *_scratch_window;
 	// Data
 	std::string _directory, _blk_file, _asm_file;
 	std::string _recent[NUM_RECENT];
 	Metatileset _metatileset;
 	Map _map;
+	Map _scratch_map;
 	Map_Events _map_events;
 	bool _gameboy_screen;
 	int _status_event_x, _status_event_y;
@@ -191,9 +198,9 @@ public:
 	inline void update_gameboy_screen(Event *e) { update_gameboy_screen(_map.block_under(e)); }
 	inline void update_gameboy_screen(void) { update_gameboy_screen(dynamic_cast<Block *>(Fl::belowmouse())); }
 	inline void redraw_map(void) { _map_scroll->redraw(); }
-	void flood_fill(Block *b, uint8_t f, uint8_t t);
-	void substitute_block(uint8_t f, uint8_t t);
-	void swap_blocks(uint8_t f, uint8_t t);
+	void flood_fill(Map &map, Block *b, uint8_t f, uint8_t t);
+	void substitute_block(Map &map, uint8_t f, uint8_t t);
+	void swap_blocks(Map &map, uint8_t f, uint8_t t);
 	void open_map(const char *filename);
 private:
 	inline void mode(Mode m) { _mode = m; }
@@ -241,6 +248,10 @@ private:
 	void toggle_favorite(uint8_t id);
 	void load_editmeta(void);
 	void save_editmeta(void);
+	// Scratch canvas
+	void load_scratch(void);
+	void save_scratch(void);
+	void resize_scratch(int w, int h);
 	// Drag-and-drop
 	static void drag_and_drop_cb(DnD_Receiver *dndr, Main_Window *mw);
 	// File menu
@@ -314,6 +325,7 @@ private:
 	static void edit_tileset_cb(Fl_Widget *w, Main_Window *mw);
 	static void edit_roof_cb(Fl_Widget *w, Main_Window *mw);
 	static void edit_current_palettes_cb(Fl_Widget *w, Main_Window *mw);
+	static void open_scratch_canvas_cb(Fl_Widget *w, Main_Window *mw);
 	// Options menu
 	static void default_palettes_cb(Fl_Menu_ *m, Main_Window *mw);
 	static void monochrome_cb(Fl_Menu_ *m, Main_Window *mw);
@@ -352,6 +364,7 @@ private:
 	static void picker_tab_cb(Fl_Widget *w, Main_Window *mw);
 	// Map
 	static void change_block_cb(Block *b, Main_Window *mw);
+	static void change_scratch_block_cb(Block *b, Main_Window *mw);
 	static void change_event_cb(Event *e, Main_Window *mw);
 };
 

@@ -43,17 +43,17 @@
 #include "app-icon.xpm"
 #endif
 
-void Main_Window::flood_fill(Block *b, uint8_t f, uint8_t t) {
+void Main_Window::flood_fill(Map &map, Block *b, uint8_t f, uint8_t t) {
 	if (f == t) { return; }
 	std::queue<size_t> queue;
-	uint8_t w = _map.width(), h = _map.height();
+	uint8_t w = map.width(), h = map.height();
 	uint8_t row = b->row(), col = b->col();
 	size_t i = row * w + col;
 	queue.push(i);
 	while (!queue.empty()) {
 		size_t j = queue.front();
 		queue.pop();
-		Block *bi = _map.block(j);
+		Block *bi = map.block(j);
 		if (bi->id() != f) { continue; }
 		bi->id(t); // fill
 		uint8_t r = bi->row(), c = bi->col();
@@ -64,21 +64,21 @@ void Main_Window::flood_fill(Block *b, uint8_t f, uint8_t t) {
 	}
 }
 
-void Main_Window::substitute_block(uint8_t f, uint8_t t) {
-	size_t n = _map.size();
+void Main_Window::substitute_block(Map &map, uint8_t f, uint8_t t) {
+	size_t n = map.size();
 	for (size_t i = 0; i < n; i++) {
-		Block *b = _map.block(i);
+		Block *b = map.block(i);
 		if (b->id() == f) {
 			b->id(t);
 		}
 	}
 }
 
-void Main_Window::swap_blocks(uint8_t f, uint8_t t) {
+void Main_Window::swap_blocks(Map &map, uint8_t f, uint8_t t) {
 	if (f == t) { return; }
-	size_t n = _map.size();
+	size_t n = map.size();
 	for (size_t i = 0; i < n; i++) {
-		Block *b = _map.block(i);
+		Block *b = map.block(i);
 		if (b->id() == f) {
 			b->id(t);
 		}
@@ -86,6 +86,25 @@ void Main_Window::swap_blocks(uint8_t f, uint8_t t) {
 			b->id(f);
 		}
 	}
+}
+
+void Main_Window::resize_scratch(int w, int h) {
+	// Snapshot the existing grid so overlapping cells survive the resize (top-left anchored).
+	uint8_t ow = _scratch_map.width(), oh = _scratch_map.height();
+	std::vector<uint8_t> old(_scratch_map.size());
+	for (size_t i = 0; i < _scratch_map.size(); i++) {
+		old[i] = _scratch_map.block(i)->id();
+	}
+	_scratch_window->clear_canvas(); // delete old Block widgets before reallocating the grid
+	_scratch_map.size((uint8_t)w, (uint8_t)h);
+	for (uint8_t y = 0; y < (uint8_t)h; y++) {
+		for (uint8_t x = 0; x < (uint8_t)w; x++) {
+			uint8_t id = (x < ow && y < oh) ? old[(size_t)y * ow + x] : 0;
+			_scratch_map.block(x, y, new Block(y, x, id));
+		}
+	}
+	_scratch_window->build(this);
+	_scratch_map.modified(true);
 }
 
 void Main_Window::add_sub_metatiles(size_t n) {

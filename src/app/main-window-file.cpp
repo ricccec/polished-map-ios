@@ -122,6 +122,56 @@ void Main_Window::load_editmeta() {
 	fclose(file);
 }
 
+// Builds _scratch_map (data + Block widgets) from the tileset's scratch sidecar, or a default
+// empty grid if none exists. The Blocks are added to the scratch window's group by build().
+void Main_Window::load_scratch() {
+	int w = SCRATCH_DEFAULT_W, h = SCRATCH_DEFAULT_H;
+	std::vector<uint8_t> cells;
+	if (!_directory.empty()) {
+		char filename[FL_PATH_MAX] = {};
+		Config::scratch_path(filename, _directory.c_str(), _metatileset.tileset().name());
+		FILE *file = fl_fopen(filename, "rb");
+		if (file) {
+			unsigned fw = 0, fh = 0;
+			if (fscanf(file, "%u %u", &fw, &fh) == 2 && fw > 0 && fh > 0 && fw <= 255 && fh <= 255) {
+				w = (int)fw;
+				h = (int)fh;
+				cells.resize((size_t)w * h, 0);
+				for (size_t i = 0; i < cells.size(); i++) {
+					unsigned id = 0;
+					if (fscanf(file, "%u", &id) != 1) { break; }
+					cells[i] = (uint8_t)id;
+				}
+			}
+			fclose(file);
+		}
+	}
+	_scratch_map.size((uint8_t)w, (uint8_t)h);
+	for (uint8_t y = 0; y < (uint8_t)h; y++) {
+		for (uint8_t x = 0; x < (uint8_t)w; x++) {
+			uint8_t id = cells.empty() ? 0 : cells[(size_t)y * w + x];
+			_scratch_map.block(x, y, new Block(y, x, id));
+		}
+	}
+}
+
+void Main_Window::save_scratch() {
+	if (_directory.empty() || !_scratch_map.size()) { return; }
+	char filename[FL_PATH_MAX] = {};
+	Config::scratch_path(filename, _directory.c_str(), _metatileset.tileset().name());
+	FILE *file = fl_fopen(filename, "wb");
+	if (!file) { return; }
+	uint8_t w = _scratch_map.width(), h = _scratch_map.height();
+	fprintf(file, "%u %u\n", (unsigned)w, (unsigned)h);
+	for (uint8_t y = 0; y < h; y++) {
+		for (uint8_t x = 0; x < w; x++) {
+			fprintf(file, "%u ", (unsigned)_scratch_map.block(x, y)->id());
+		}
+		fprintf(file, "\n");
+	}
+	fclose(file);
+}
+
 void Main_Window::open_map(const char *filename) {
 	const char *basename = fl_filename_name(filename);
 

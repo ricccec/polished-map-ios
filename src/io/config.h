@@ -23,6 +23,7 @@ public:
 	static void metatileset_path(char *dest, const char *root, const char *tileset);
 	static void attributes_path(char *dest, const char *root, const char *tileset);
 	static void editmeta_path(char *dest, const char *root, const char *tileset);
+	static void scratch_path(char *dest, const char *root, const char *tileset);
 	static bool collisions_path(char *dest, const char *root, const char *tileset);
 	static void map_constants_path(char *dest, const char *root);
 	static void tileset_constants_path(char *dest, const char *root);

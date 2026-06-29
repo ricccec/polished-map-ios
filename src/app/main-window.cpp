@@ -118,6 +118,10 @@ Main_Window::Main_Window(int x, int y, int w, int h, const char *) : Fl_Overlay_
 	Fl_Mac_App_Menu::about = "About " PROGRAM_NAME;
 	Fl_Mac_App_Menu::hide = "Hide " PROGRAM_NAME;
 	Fl_Mac_App_Menu::quit = "Quit " PROGRAM_NAME;
+	// Don't let FLTK add an automatic Window menu: on macOS (FLTK 1.4+) it reallocates the menu
+	// array after windows are shown, which invalidates the cached Fl_Menu_Item* pointers we use
+	// to enable/disable items (so toggling them via activate()/deactivate() stops working).
+	Fl_Sys_Menu_Bar::window_menu_style(Fl_Sys_Menu_Bar::no_window_menu);
 	_menu_bar = new Fl_Sys_Menu_Bar(wx, wy, w, 0);
 #else
 	_menu_bar = new Fl_Sys_Menu_Bar(wx, wy, w, 21);
@@ -272,6 +276,7 @@ Main_Window::Main_Window(int x, int y, int w, int h, const char *) : Fl_Overlay_
 	_roof_window = new Roof_Window(48, 48);
 	_palette_window = new Palette_Window(48, 48);
 	_monochrome_palette_window = new Monochrome_Palette_Window(48, 48);
+	_scratch_window = new Scratch_Window(48, 48);
 
 	// Drag-and-drop receiver
 	_dnd_receiver = new DnD_Receiver(0, 0, 0, 0);
@@ -448,7 +453,8 @@ Main_Window::Main_Window(int x, int y, int w, int h, const char *) : Fl_Overlay_
 		{},
 		OS_SUBMENU("&Tools"),
 		OS_MENU_ITEM("Resize &Blockset...", FL_COMMAND + 'b', (Fl_Callback *)add_sub_cb, this, 0),
-		OS_MENU_ITEM("Resize &Map...", FL_COMMAND + 'e', (Fl_Callback *)resize_cb, this, FL_MENU_DIVIDER),
+		OS_MENU_ITEM("Resize &Map...", FL_COMMAND + 'e', (Fl_Callback *)resize_cb, this, 0),
+		OS_MENU_ITEM("Scratch &Canvas...", FL_COMMAND + 'k', (Fl_Callback *)open_scratch_canvas_cb, this, FL_MENU_DIVIDER),
 #ifdef __APPLE__
 		// Command+H hides all open windows in macOS
 		OS_MENU_ITEM("Chan&ge Tileset...", FL_COMMAND + 'j', (Fl_Callback *)change_tileset_cb, this, 0),
@@ -598,6 +604,7 @@ Main_Window::Main_Window(int x, int y, int w, int h, const char *) : Fl_Overlay_
 	_edit_tileset_mi = PM_FIND_MENU_ITEM_CB(edit_tileset_cb);
 	_change_roof_mi = PM_FIND_MENU_ITEM_CB(change_roof_cb);
 	_edit_roof_mi = PM_FIND_MENU_ITEM_CB(edit_roof_cb);
+	_scratch_canvas_mi = PM_FIND_MENU_ITEM_CB(open_scratch_canvas_cb);
 #undef PM_FIND_MENU_ITEM_CB
 
 #ifndef __APPLE__
@@ -855,6 +862,7 @@ Main_Window::~Main_Window() {
 	delete _roof_window;
 	delete _palette_window;
 	delete _monochrome_palette_window;
+	delete _scratch_window;
 }
 
 void Main_Window::show() {

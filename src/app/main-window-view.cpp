@@ -183,6 +183,7 @@ void Main_Window::update_active_controls() {
 		_add_sub_tb->activate();
 		_resize_map_mi->activate();
 		_resize_tb->activate();
+		_scratch_canvas_mi->activate();
 		_change_tileset_mi->activate();
 		_change_tileset_tb->activate();
 		_edit_tileset_mi->activate();
@@ -236,6 +237,7 @@ void Main_Window::update_active_controls() {
 		_add_sub_tb->deactivate();
 		_resize_map_mi->deactivate();
 		_resize_tb->deactivate();
+		_scratch_canvas_mi->deactivate();
 		_change_tileset_mi->deactivate();
 		_edit_tileset_mi->deactivate();
 		_change_tileset_tb->deactivate();
@@ -245,6 +247,12 @@ void Main_Window::update_active_controls() {
 		_edit_roof_mi->deactivate();
 		_edit_roof_tb->deactivate();
 	}
+#ifdef __APPLE__
+	// Rebuild the native macOS menu so the activate()/deactivate() changes above take effect.
+	// This relies on the cached Fl_Menu_Item* pointers still pointing into the live menu array,
+	// which holds now that the auto Window menu (which reallocated it) is disabled.
+	_menu_bar->update();
+#endif
 }
 
 void Main_Window::update_priority_controls() {
@@ -335,6 +343,7 @@ void Main_Window::update_zoom() {
 		_map_scroll->scroll_to(sx / 2, sy / 2);
 	}
 	update_layout();
+	_scratch_window->sync_zoom();
 }
 
 void Main_Window::update_layout() {
